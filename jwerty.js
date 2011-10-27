@@ -35,7 +35,7 @@
             return selector ? $.querySelector(selector, context || $) : $;
         };
         
-        $b = function (e, fn) { e.addEventListener(ke, fn, false); };
+        $b = function (e, fn) { (e.addEventListener) ? e.addEventListener(ke, fn, false) : e.attachEvent('on'+ke, function(e){ fn(e); }); };
         $f = function (e, jwertyEv) {
             var ret = document.createEvent('Event')
             ,   i;
@@ -324,7 +324,15 @@
                         
                         // If the callback returned false, then we should run
                         // preventDefault();
-                        if (returnValue === false) event.preventDefault();
+                        if (returnValue === false) {
+                            if (event.preventDefault) {
+                                event.preventDefault();
+                            } else {
+                                event.returnValue = false;
+                                if (event.stopPropagation) event.stopPropagation();
+                                if (event.cancelBubble) event.cancelBubble = true;
+                            }
+                        }
                         
                         // Reset i for the next sequence to fire.
                         i = 0;
@@ -379,7 +387,7 @@
                 // For each property in the jwertyCode object, compare to `event`
                 for (var p in jwertyCode[n]) {
                     // ...except for jwertyCode.jwertyCombo...
-                    if (p !== 'jwertyCombo' && event[p] !== jwertyCode[n][p]) returnValue = false;
+                    if (p !== 'jwertyCombo' && p in event && event[p] !== jwertyCode[n][p]) returnValue = false;
                 }
                 // If this jwertyCode optional wasn't falsey, then we can return early.
                 if (returnValue !== false) return returnValue;
